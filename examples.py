@@ -212,12 +212,8 @@ def main():
     """Run all examples."""
     
     # Check for API key
-    if not os.getenv("GOOGLE_API_KEY"):
-        print("❌ Error: GOOGLE_API_KEY environment variable not set!")
-        print("\nPlease set your Google API key:")
-        print("export GOOGLE_API_KEY='your-api-key-here'")
-        print("\n🆓 Get your FREE API key at: https://makersuite.google.com/app/apikey")
-        return
+    print("🚀 Using LOCAL Ollama model - no API keys required!")
+    print("💰 Cost: $0 - Runs completely offline!\n")
     
     print("\n" + "█" * 80)
     print("  MentorAI: AI TEACHING ASSISTANT - EXAMPLE DEMONSTRATIONS")

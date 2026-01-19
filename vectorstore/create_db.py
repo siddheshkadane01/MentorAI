@@ -129,12 +129,8 @@ if __name__ == "__main__":
     """
     import sys
     
-    # Check for Google API key (only needed for chat, not embeddings)
-    if not os.getenv("GOOGLE_API_KEY"):
-        logger.warning("GOOGLE_API_KEY not set (needed for chat agents, but not for embeddings)")
-        logger.info("Get your FREE API key at: https://makersuite.google.com/app/apikey")
-        logger.info("")
-        logger.info("✅ LOCAL EMBEDDINGS: Using Sentence Transformers (no API needed!)")
+    logger.info("✅ 100% LOCAL: Using Sentence Transformers for embeddings (no API needed!)")
+    logger.info("✅ 100% LOCAL: Using Ollama for chat (no API needed!)")
     
     # Create vector database
     try:

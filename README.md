@@ -15,21 +15,29 @@
 - 🎓 **Adaptive Learning** - Personalized explanations, quizzes, and feedback
 - 📊 **Real-time Logging** - Complete visibility into agent decisions
 - 💻 **Interactive UI** - Clean Streamlit interface
-- 🆓 **Free Tier Ready** - Uses Google Gemini (1500 requests/day free)
-- 🔌 **Local Embeddings** - Sentence Transformers (no API costs)
+- 💰 **100% Local & Free** - Runs completely offline with Ollama (no API costs)
+- 🔌 **No Internet Required** - All processing happens on your machine
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.8+
-- Google Gemini API key (free at [aistudio.google.com](https://aistudio.google.com/app/apikey))
+- Ollama installed ([ollama.ai](https://ollama.ai))
+- 8GB RAM minimum (16GB recommended)
 
 ### Installation
 
 ```bash
 # Clone repository
-git clone <your-repo-url>
-cd agent1-teaching-assistant
+git clone https://github.com/siddheshkadane01/MentorAI.git
+cd MentorAI
+
+# Install Ollama (if not installed)
+brew install ollama  # macOS
+# or visit https://ollama.ai for other platforms
+
+# Download LLM model
+ollama pull llama3.2:3b
 
 # Create virtual environment
 python -m venv venv
@@ -37,10 +45,6 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Setup API key
-cp .env.example .env
-# Edit .env and add your Google API key
 
 # Create vector database
 python vectorstore/create_db.py
@@ -78,11 +82,11 @@ Student Query → Query Agent (intent classification)
 
 | Agent | Purpose | Model |
 |-------|---------|-------|
-| **Query Agent** | Classifies intent (concept/practice/quiz/doubt) | Gemini 2.5 Flash |
+| **Query Agent** | Classifies intent (concept/practice/quiz/doubt) | Ollama (llama3.2:3b) |
 | **Retrieval Agent** | Semantic search using FAISS + local embeddings | Sentence Transformers |
-| **Teaching Agent** | Generates explanations with examples | Gemini 2.5 Flash |
-| **Quiz Agent** | Creates adaptive practice questions | Gemini 2.5 Flash |
-| **Evaluation Agent** | Scores answers and provides feedback | Gemini 2.5 Flash |
+| **Teaching Agent** | Generates explanations with examples | Ollama (llama3.2:3b) |
+| **Quiz Agent** | Creates adaptive practice questions | Ollama (llama3.2:3b) |
+| **Evaluation Agent** | Scores answers and provides feedback | Ollama (llama3.2:3b) |
 
 ## 📂 Project Structure
 
@@ -137,7 +141,7 @@ User: "What's the difference between bagging and boosting?"
 ## 🔧 Configuration
 
 Edit `config.py` to customize:
-- Model selection (default: `models/gemini-2.5-flash`)
+- Model selection (default: `llama3.2:3b`)
 - Temperature settings for each agent
 - Chunk size for RAG
 - Number of quiz questions
@@ -147,11 +151,12 @@ Edit `config.py` to customize:
 
 - **Orchestration**: LangGraph 0.2.45
 - **Framework**: LangChain 0.3.7
-- **Chat Model**: Google Gemini 2.5 Flash
-- **Embeddings**: Sentence Transformers (all-MiniLM-L6-v2)
-- **Vector DB**: FAISS 1.8.0
+- **Chat Model**: Ollama (llama3.2:3b) - 100% Local
+- **Embeddings**: Sentence Transformers (all-MiniLM-L6-v2) - Local
+- **Vector DB**: FAISS 1.8.0 - Local Storage
 - **Frontend**: Streamlit 1.39.0
 - **Python**: 3.8+
+- **Cost**: $0 - Everything runs locally!
 
 ## 🎯 Why Multi-Agent?
 
@@ -181,7 +186,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Built with [LangGraph](https://github.com/langchain-ai/langgraph) for multi-agent orchestration
-- Powered by [Google Gemini](https://ai.google.dev/) for chat capabilities
+- Powered by [Ollama](https://ollama.ai/) for local LLM execution
 - Uses [Sentence Transformers](https://www.sbert.net/) for local embeddings
 - UI built with [Streamlit](https://streamlit.io/)
 
@@ -191,7 +196,7 @@ For questions or feedback, please open an issue on GitHub.
 
 ---
 
-**Made with ❤️ using LangGraph, LangChain, and Streamlit**
+**Made with ❤️ using LangGraph, LangChain, Ollama, and Streamlit | 100% Local & Free**
 
 
 ### Step 1: Clone and Navigate
@@ -219,20 +224,16 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Step 4: Set OpenAI API Key
+### Step 4: Install and Setup Ollama
 
 ```bash
-# On macOS/Linux:
-export OPENAI_API_KEY='your-api-key-here'
+# Install Ollama (macOS)
+brew install ollama
 
-# On Windows (Command Prompt):
-set OPENAI_API_KEY=your-api-key-here
+# For other platforms, visit: https://ollama.ai
 
-# On Windows (PowerShell):
-$env:OPENAI_API_KEY="your-api-key-here"
-
-# Or create a .env file:
-echo "OPENAI_API_KEY=your-api-key-here" > .env
+# Download the LLM model
+ollama pull llama3.2:3b
 ```
 
 ### Step 5: Create Vector Database

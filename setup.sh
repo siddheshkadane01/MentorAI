@@ -29,20 +29,32 @@ fi
 echo -e "${GREEN}✓ Python version OK: $PYTHON_VERSION${NC}"
 echo ""
 
-# Check for Google API key
-echo "Checking Google API key..."
-if [ -z "$GOOGLE_API_KEY" ]; then
-    echo -e "${YELLOW}⚠ GOOGLE_API_KEY not set${NC}"
-    echo ""
-    echo "🆓 Google Gemini is FREE with generous limits!"
-    echo "Get your API key at: https://makersuite.google.com/app/apikey"
-    echo ""
-    read -p "Enter your Google API key: " api_key
-    export GOOGLE_API_KEY="$api_key"
-    echo "export GOOGLE_API_KEY='$api_key'" >> ~/.zshrc
-    echo -e "${GREEN}✓ API key configured${NC}"
+# Check for Ollama installation
+echo "Checking Ollama installation..."
+if command -v ollama &> /dev/null; then
+    echo -e "${GREEN}✓ Ollama is installed${NC}"
+    
+    # Check if model is downloaded
+    if ollama list | grep -q "llama3.2:3b"; then
+        echo -e "${GREEN}✓ llama3.2:3b model is already downloaded${NC}"
+    else
+        echo -e "${YELLOW}⚠ llama3.2:3b model not found${NC}"
+        echo "Downloading model (this may take a few minutes)..."
+        ollama pull llama3.2:3b
+        echo -e "${GREEN}✓ Model downloaded${NC}"
+    fi
 else
-    echo -e "${GREEN}✓ GOOGLE_API_KEY already set${NC}"
+    echo -e "${YELLOW}⚠ Ollama not installed${NC}"
+    echo ""
+    echo "💻 Ollama is required for 100% local operation"
+    echo "Install it with: brew install ollama"
+    echo "Or visit: https://ollama.ai"
+    echo ""
+    read -p "Do you want to continue without Ollama? (y/n): " continue_setup
+    if [ "$continue_setup" != "y" ]; then
+        echo "Setup cancelled. Please install Ollama first."
+        exit 1
+    fi
 fi
 echo ""
 
@@ -90,7 +102,7 @@ python -c "
 import streamlit
 import langchain
 import langgraph
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_ollama import ChatOllama
 print('All imports successful!')
 " 2>&1 && echo -e "${GREEN}✓ Installation test passed${NC}" || echo -e "${RED}✗ Installation test failed${NC}"
 echo ""

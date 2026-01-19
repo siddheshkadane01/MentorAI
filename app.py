@@ -160,11 +160,9 @@ def display_sidebar():
             st.error("❌ Vector Database: Not Found")
             st.info("Run: `python vectorstore/create_db.py`")
         
-        # API Key status
-        if os.getenv("GOOGLE_API_KEY"):
-            st.success("✅ Google Gemini API: Connected")
-        else:
-            st.error("❌ Google Gemini API: Not Configured")
+        # Model status
+        st.success("✅ Ollama (llama3.2:3b): Local - No API needed")
+        st.info("💰 Cost: $0 - Runs completely offline!")
         
         st.divider()
         
@@ -316,18 +314,8 @@ def main():
     # Initialize
     initialize_session_state()
     
-    # Check for API key
-    if not os.getenv("GOOGLE_API_KEY"):
-        st.error("⚠️ GOOGLE_API_KEY environment variable not set!")
-        st.info("Please set your Google API key to use this application.")
-        st.code("export GOOGLE_API_KEY='your-api-key-here'")
-        st.markdown("""### 🆓 Get Your FREE API Key:
-        1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
-        2. Click "Create API Key"
-        3. Copy the key and set it as environment variable
-        
-        **Google Gemini is FREE** with generous usage limits!""")
-        st.stop()
+    # Check for Ollama
+    logger.info("🚀 Using LOCAL Ollama model - no API keys required!")
     
     # Display UI
     display_header()
@@ -437,8 +425,8 @@ def main():
     st.divider()
     st.markdown("""
     <p style='text-align: center; color: #888; font-size: 0.9rem;'>
-    Built with LangGraph, LangChain, OpenAI, FAISS, and Streamlit | 
-    Multi-Agent Agentic Workflow Demo
+    Built with LangGraph, LangChain, Ollama, FAISS, and Streamlit | 
+    100% Local Multi-Agent System - Zero API Costs 💰
     </p>
     """, unsafe_allow_html=True)
 

@@ -286,10 +286,7 @@ if __name__ == "__main__":
     """
     import os
     
-    # Check for API key
-    if not os.getenv("OPENAI_API_KEY"):
-        logger.error("OPENAI_API_KEY environment variable not set!")
-        exit(1)
+    logger.info("🚀 Using 100% LOCAL Ollama model - no API keys needed!")
     
     # Create teaching assistant
     assistant = create_teaching_assistant()

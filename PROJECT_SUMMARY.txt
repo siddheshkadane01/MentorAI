@@ -26,9 +26,9 @@ Files:          19 files across 4 directories
 ├────────────────────┼──────────────────────────────────────────────────┤
 │ Orchestration      │ LangGraph 0.2.45                                │
 │ LLM Framework      │ LangChain 0.3.7                                 │
-│ AI Model           │ OpenAI GPT-4o-mini                              │
-│ Vector Database    │ FAISS 1.8.0                                     │
-│ Embeddings         │ OpenAI text-embedding-3                         │
+│ AI Model           │ Ollama (llama3.2:3b) - 100% Local              │
+│ Vector Database    │ FAISS 1.8.0 - Local Storage                    │
+│ Embeddings         │ Sentence Transformers - 100% Local             │
 │ Frontend           │ Streamlit 1.39.0                                │
 │ Language           │ Python 3.8+                                     │
 └────────────────────┴──────────────────────────────────────────────────┘
@@ -191,7 +191,8 @@ $ ./setup.sh
 
 Option 2: Manual Setup
 ──────────────────────────
-$ export OPENAI_API_KEY='your-api-key'
+$ brew install ollama  # Install Ollama
+$ ollama pull llama3.2:3b  # Download model
 $ python3 -m venv venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
@@ -277,7 +278,7 @@ Cost per Query:
 Scalability:
   • Vector DB:              Handles 1000+ documents
   • Concurrent Users:       Unlimited (stateless)
-  • API Rate Limit:         Depends on OpenAI tier
+  • API Rate Limit:         Unlimited (100% local)
 
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ EDUCATIONAL VALUE                                                        │

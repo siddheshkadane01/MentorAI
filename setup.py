@@ -1,73 +1,89 @@
 #!/usr/bin/env python3
 """
 Simple setup wizard for MentorAI Teaching Assistant
-Configures the Google Gemini API key
+Checks Ollama installation and downloads required model
 """
 
 import os
 import sys
+import subprocess
+
+def check_ollama():
+    """Check if Ollama is installed."""
+    try:
+        result = subprocess.run(['ollama', '--version'], 
+                              capture_output=True, text=True, timeout=5)
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+def check_model():
+    """Check if llama3.2:3b model is available."""
+    try:
+        result = subprocess.run(['ollama', 'list'], 
+                              capture_output=True, text=True, timeout=5)
+        return 'llama3.2:3b' in result.stdout
+    except:
+        return False
+
+def pull_model():
+    """Download the llama3.2:3b model."""
+    print("\n📥 Downloading llama3.2:3b model (2GB)...")
+    print("This may take a few minutes...\n")
+    try:
+        subprocess.run(['ollama', 'pull', 'llama3.2:3b'], check=True)
+        return True
+    except:
+        return False
 
 def main():
     print("\n" + "="*70)
     print("🤖 MentorAI: AI Teaching Assistant - Setup Wizard")
     print("="*70 + "\n")
     
-    # Check current .env file
-    env_path = ".env"
-    if os.path.exists(env_path):
-        with open(env_path, 'r') as f:
-            content = f.read()
-            if 'GOOGLE_API_KEY=' in content and 'your_google_api_key_here' not in content:
-                # Extract the key
-                for line in content.split('\n'):
-                    if line.startswith('GOOGLE_API_KEY=') and not line.endswith('your_google_api_key_here'):
-                        print("✅ API key already configured!\n")
-                        print("To start the application, run:")
-                        print("   streamlit run app.py\n")
-                        return
+    print("✅ 100% LOCAL SETUP - No API keys needed!\n")
     
-    print("📋 SETUP STEPS:\n")
-    print("1. Get your FREE Google Gemini API key:")
-    print("   👉 Visit: https://aistudio.google.com/app/apikey")
-    print("   👉 Sign in with your Google account")
-    print("   👉 Click 'Create API Key'")
-    print("   👉 Copy the key (starts with 'AIza...')\n")
-    
-    print("2. Paste your API key below:\n")
-    
-    api_key = input("Enter your Google API Key: ").strip()
-    
-    if not api_key:
-        print("\n❌ No API key entered. Run setup again when you have your key.\n")
+    # Check Ollama installation
+    print("Checking Ollama installation...")
+    if not check_ollama():
+        print("\n❌ Ollama not found!")
+        print("\n📋 Installation Instructions:")
+        print("   macOS:   brew install ollama")
+        print("   Linux:   curl -fsSL https://ollama.ai/install.sh | sh")
+        print("   Windows: Visit https://ollama.ai/download\n")
         sys.exit(1)
     
-    if api_key == "your_google_api_key_here":
-        print("\n❌ Please enter your actual API key, not the placeholder.\n")
-        sys.exit(1)
+    print("✅ Ollama is installed!\n")
     
-    # Validate format
-    if not api_key.startswith('AIza'):
-        print("\n⚠️  Warning: API key doesn't start with 'AIza'. Make sure it's correct.")
-        confirm = input("Continue anyway? (y/n): ").strip().lower()
-        if confirm != 'y':
-            print("\n❌ Setup cancelled.\n")
+    # Check model
+    print("Checking for llama3.2:3b model...")
+    if not check_model():
+        print("❌ Model not found!")
+        response = input("\nDownload llama3.2:3b model (2GB)? (y/n): ").strip().lower()
+        if response == 'y':
+            if pull_model():
+                print("\n✅ Model downloaded successfully!")
+            else:
+                print("\n❌ Failed to download model.")
+                sys.exit(1)
+        else:
+            print("\n❌ Model is required. Setup cancelled.\n")
             sys.exit(1)
-    
-    # Write to .env
-    with open(env_path, 'w') as f:
-        f.write("# Google Gemini API Key (FREE TIER)\n")
-        f.write("# Get your key from: https://aistudio.google.com/app/apikey\n\n")
-        f.write(f"GOOGLE_API_KEY={api_key}\n")
+    else:
+        print("✅ llama3.2:3b model is ready!\n")
     
     print("\n" + "="*70)
     print("✅ Setup Complete!")
     print("="*70 + "\n")
-    print("Your API key has been saved to .env\n")
+    print("💰 100% Local - No API costs!")
+    print("🔒 Complete privacy - Everything runs offline\n")
     print("Next steps:")
-    print("1. Start the application:")
+    print("1. Create vector database:")
+    print("   python vectorstore/create_db.py\n")
+    print("2. Start the application:")
     print("   streamlit run app.py\n")
-    print("2. Open in browser: http://localhost:8501\n")
-    print("3. Try asking:")
+    print("3. Open in browser: http://localhost:8501\n")
+    print("4. Try asking:")
     print("   • 'Explain supervised learning'")
     print("   • 'Give me a quiz on machine learning'\n")
     print("="*70 + "\n")
