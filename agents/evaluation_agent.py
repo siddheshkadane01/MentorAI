@@ -5,7 +5,7 @@ Evaluates student answers and provides feedback.
 
 import logging
 import os
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 import json
@@ -28,11 +28,64 @@ class EvaluationAgent:
         )
         logger.info(f"EvaluationAgent initialized with LOCAL model: {model_name}")
     
+    def evaluate_mcq_answer(
+        self,
+        question: str,
+        student_answer: str,
+        correct_answer: str,
+        explanation: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Evaluate an MCQ answer with exact matching.
+        
+        Args:
+            question: The question asked
+            student_answer: Student's selected option
+            correct_answer: Correct option
+            explanation: Explanation for the correct answer
+            
+        Returns:
+            Dictionary with score and feedback
+        """
+        # Normalize answers for comparison
+        student_clean = student_answer.strip()
+        correct_clean = correct_answer.strip()
+        
+        is_correct = student_clean == correct_clean
+        score = 100 if is_correct else 0
+        
+        logger.info(f"[EVALUATION AGENT] MCQ - Student: '{student_clean}' | Correct: '{correct_clean}' | Match: {is_correct}")
+        
+        if is_correct:
+            return {
+                "score": score,
+                "is_correct": True,
+                "strengths": ["Correct answer selected", "Good understanding of the concept"],
+                "weaknesses": [],
+                "feedback": f"✅ Excellent! Your answer is correct. {explanation}",
+                "improvement_tips": []
+            }
+        else:
+            return {
+                "score": score,
+                "is_correct": False,
+                "strengths": ["Attempted the question"],
+                "weaknesses": ["Incorrect option selected", "Review the concept"],
+                "feedback": f"❌ Incorrect. The correct answer is: {correct_answer}. {explanation}",
+                "improvement_tips": [
+                    "Review the relevant study material",
+                    "Focus on understanding key concepts",
+                    "Try similar practice questions"
+                ]
+            }
+    
     def evaluate_answer(
         self, 
         question: str,
         student_answer: str,
         correct_answer: str,
+        question_type: str = "multiple_choice",
+        explanation: str = "",
         context: str = ""
     ) -> Dict[str, Any]:
         """
@@ -42,13 +95,20 @@ class EvaluationAgent:
             question: The question asked
             student_answer: Student's response
             correct_answer: Expected correct answer
+            question_type: Type of question (multiple_choice or short_answer)
+            explanation: Explanation for correct answer
             context: Additional context for evaluation
             
         Returns:
             Dictionary with score, feedback, and suggestions
         """
-        logger.info(f"[EVALUATION AGENT] Evaluating answer for question: {question[:50]}...")
+        logger.info(f"[EVALUATION AGENT] Evaluating {question_type} answer for question: {question[:50]}...")
         
+        # For MCQ, use exact matching
+        if question_type == "multiple_choice":
+            return self.evaluate_mcq_answer(question, student_answer, correct_answer, explanation)
+        
+        # For short answer, use LLM evaluation
         prompt = ChatPromptTemplate.from_messages([
             ("system", """You are an expert educational evaluator.
 
@@ -122,10 +182,12 @@ Be encouraging but honest. Focus on understanding, not exact wording."""),
             if idx < len(quiz):
                 question_data = quiz[idx]
                 eval_result = self.evaluate_answer(
-                    question_data["question"],
-                    answer_text,
-                    question_data["correct_answer"],
-                    context
+                    question=question_data["question"],
+                    student_answer=answer_text,
+                    correct_answer=question_data["correct_answer"],
+                    question_type=question_data.get("type", "multiple_choice"),
+                    explanation=question_data.get("explanation", ""),
+                    context=context
                 )
                 eval_result["question_number"] = idx + 1
                 evaluations.append(eval_result)
@@ -133,9 +195,14 @@ Be encouraging but honest. Focus on understanding, not exact wording."""),
         
         avg_score = total_score / len(student_answers) if student_answers else 0
         
+        # Calculate additional stats
+        correct_count = sum(1 for e in evaluations if e.get("is_correct", False))
+        
         return {
             "overall_score": round(avg_score, 2),
             "questions_evaluated": len(evaluations),
+            "correct_answers": correct_count,
+            "incorrect_answers": len(evaluations) - correct_count,
             "evaluations": evaluations
         }
     
@@ -166,3 +233,19 @@ Be encouraging but honest. Focus on understanding, not exact wording."""),
         logger.info(f"[EVALUATION AGENT] Overall score: {evaluation['overall_score']}/100")
         
         return state
+    
+    def evaluate_quiz_directly(self, quiz_questions: List[Dict[str, Any]], student_answers: Dict[int, str], context: str = "") -> Dict[str, Any]:
+        """
+        Directly evaluate a quiz without going through the state graph.
+        Used for MCQ mode where we already have the quiz questions.
+        
+        Args:
+            quiz_questions: List of quiz questions with correct answers
+            student_answers: Dict mapping question index to student's answer
+            context: Optional context for evaluation
+            
+        Returns:
+            Evaluation results dictionary
+        """
+        logger.info(f"[EVALUATION AGENT] Direct evaluation of {len(student_answers)} answers...")
+        return self.evaluate_quiz(quiz_questions, student_answers, context)

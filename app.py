@@ -105,6 +105,15 @@ def initialize_session_state():
     
     if 'quiz_results' not in st.session_state:
         st.session_state.quiz_results = None
+    
+    if 'mcq_quiz' not in st.session_state:
+        st.session_state.mcq_quiz = None
+    
+    if 'mcq_answers' not in st.session_state:
+        st.session_state.mcq_answers = {}
+    
+    if 'mcq_results' not in st.session_state:
+        st.session_state.mcq_results = None
 
 
 def display_header():
@@ -253,19 +262,23 @@ def display_evaluation(evaluation: Dict[str, Any]):
     
     # Overall score
     score = evaluation.get('overall_score', 0)
+    correct = evaluation.get('correct_answers', 0)
+    incorrect = evaluation.get('incorrect_answers', 0)
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Overall Score", f"{score}/100")
+        st.metric("Overall Score", f"{score}%")
     with col2:
-        st.metric("Questions Evaluated", evaluation.get('questions_evaluated', 0))
+        st.metric("✅ Correct", correct)
     with col3:
+        st.metric("❌ Incorrect", incorrect)
+    with col4:
         if score >= 70:
-            st.success("✅ Great Job!")
+            st.success("🎉 Excellent!")
         elif score >= 50:
-            st.warning("⚠️ Good Effort!")
+            st.warning("👍 Good!")
         else:
-            st.error("❌ Keep Practicing!")
+            st.error("📚 Keep Practicing!")
     
     # Individual question feedback
     st.markdown("---")
@@ -277,29 +290,27 @@ def display_evaluation(evaluation: Dict[str, Any]):
         is_correct = eval_item.get('is_correct', False)
         
         # Color-coded feedback box
-        if q_score >= 70:
-            feedback_class = "feedback-good"
+        if is_correct:
             icon = "✅"
+            color = "green"
         else:
-            feedback_class = "feedback-poor"
             icon = "❌"
+            color = "red"
         
         with st.container():
-            st.markdown(f"#### {icon} Question {q_num} - Score: {q_score}/100")
+            st.markdown(f"### {icon} Question {q_num} - Score: {q_score}/100")
             
-            col1, col2 = st.columns(2)
+            st.markdown(f"**{eval_item.get('feedback', '')}**")
             
-            with col1:
-                st.markdown("**Strengths:**")
-                for strength in eval_item.get('strengths', []):
-                    st.markdown(f"- {strength}")
+            if eval_item.get('strengths'):
+                with st.expander("💪 Strengths"):
+                    for strength in eval_item.get('strengths', []):
+                        st.markdown(f"- {strength}")
             
-            with col2:
-                st.markdown("**Areas to Improve:**")
-                for weakness in eval_item.get('weaknesses', []):
-                    st.markdown(f"- {weakness}")
-            
-            st.markdown(f"**Feedback:** {eval_item.get('feedback', '')}")
+            if eval_item.get('weaknesses'):
+                with st.expander("⚠️ Areas to Improve"):
+                    for weakness in eval_item.get('weaknesses', []):
+                        st.markdown(f"- {weakness}")
             
             if eval_item.get('improvement_tips'):
                 with st.expander("💡 Improvement Tips"):
@@ -307,6 +318,165 @@ def display_evaluation(evaluation: Dict[str, Any]):
                         st.markdown(f"- {tip}")
             
             st.divider()
+
+
+def display_mcq_quiz_mode():
+    """Display dedicated MCQ quiz mode interface."""
+    st.header("📝 MCQ Quiz Mode")
+    st.markdown("Generate and take multiple-choice quizzes on any topic!")
+    
+    # Topic selection
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        topic = st.text_input(
+            "Enter topic for quiz:",
+            placeholder="e.g., Machine Learning, Neural Networks, Linear Regression",
+            key="mcq_topic_input"
+        )
+    
+    with col2:
+        num_questions = st.selectbox(
+            "Questions:",
+            [5, 10, 15, 20],
+            index=0,
+            key="num_mcq_questions"
+        )
+    
+    difficulty = st.select_slider(
+        "Difficulty Level:",
+        options=["easy", "medium", "hard"],
+        value="medium",
+        key="mcq_difficulty"
+    )
+    
+    # Generate quiz button
+    if st.button("🎯 Generate MCQ Quiz", type="primary", use_container_width=True):
+        if topic:
+            with st.spinner(f"🤖 Generating {num_questions} MCQ questions on {topic}..."):
+                try:
+                    # Generate quiz using the assistant with explicit number
+                    query = f"Generate a {num_questions}-question multiple choice quiz on {topic} at {difficulty} difficulty level. Generate EXACTLY {num_questions} questions."
+                    
+                    # Log the request
+                    st.info(f"📋 Requesting {num_questions} questions on '{topic}' ({difficulty} level)")
+                    
+                    result = st.session_state.assistant.process_query(query)
+                    
+                    # Filter only MCQ questions
+                    all_questions = result.get('quiz', [])
+                    mcq_questions = [q for q in all_questions if q.get('type') == 'multiple_choice' and q.get('options')]
+                    
+                    if mcq_questions:
+                        # Warning if fewer questions than requested
+                        if len(mcq_questions) < num_questions:
+                            st.warning(f"⚠️ Generated {len(mcq_questions)} MCQ questions (requested {num_questions}). The AI model may need more context.")
+                        
+                        st.session_state.mcq_quiz = {
+                            'topic': topic,
+                            'difficulty': difficulty,
+                            'questions': mcq_questions,
+                            'query': query,
+                            'requested_count': num_questions
+                        }
+                        st.session_state.mcq_answers = {}
+                        st.session_state.mcq_results = None
+                        st.success(f"✅ Generated {len(mcq_questions)} MCQ questions!")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ No MCQ questions were generated. Try a different topic or rephrase.")
+                except Exception as e:
+                    st.error(f"❌ Error generating quiz: {str(e)}")
+                    st.exception(e)
+        else:
+            st.warning("⚠️ Please enter a topic for the quiz.")
+    
+    # Display quiz if generated
+    if st.session_state.mcq_quiz and not st.session_state.mcq_results:
+        st.divider()
+        quiz_data = st.session_state.mcq_quiz
+        
+        st.subheader(f"📚 Quiz: {quiz_data['topic']}")
+        st.caption(f"Difficulty: {quiz_data['difficulty'].title()} | Questions: {len(quiz_data['questions'])}")
+        
+        # Display questions
+        for idx, q in enumerate(quiz_data['questions']):
+            with st.container():
+                st.markdown(f"### Question {idx + 1}")
+                st.markdown(f"**{q['question']}**")
+                
+                # Radio buttons for MCQ
+                answer = st.radio(
+                    "Select your answer:",
+                    q['options'],
+                    key=f"mcq_q_{idx}",
+                    index=None
+                )
+                
+                if answer:
+                    st.session_state.mcq_answers[idx] = answer
+                
+                st.divider()
+        
+        # Submit button
+        st.markdown("---")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            answered_count = len(st.session_state.mcq_answers)
+            total_count = len(quiz_data['questions'])
+            
+            st.info(f"Answered: {answered_count}/{total_count} questions")
+            
+            if st.button("✅ Submit Quiz", type="primary", use_container_width=True):
+                if st.session_state.mcq_answers:
+                    with st.spinner("🤖 Evaluating your answers..."):
+                        try:
+                            # Evaluate directly using the original quiz questions
+                            # Don't regenerate the quiz!
+                            from agents.evaluation_agent import EvaluationAgent
+                            evaluator = EvaluationAgent()
+                            
+                            st.session_state.mcq_results = evaluator.evaluate_quiz_directly(
+                                quiz_data['questions'],
+                                st.session_state.mcq_answers
+                            )
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Error evaluating quiz: {str(e)}")
+                            logger.error(f"Evaluation error: {e}", exc_info=True)
+                else:
+                    st.warning("⚠️ Please answer at least one question before submitting.")
+    
+    # Display results if available
+    if st.session_state.mcq_results:
+        st.divider()
+        display_evaluation(st.session_state.mcq_results)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔄 Take Another Quiz", use_container_width=True):
+                st.session_state.mcq_quiz = None
+                st.session_state.mcq_answers = {}
+                st.session_state.mcq_results = None
+                st.rerun()
+        
+        with col2:
+            if st.button("📊 View Correct Answers", use_container_width=True):
+                st.session_state.show_answers = True
+                st.rerun()
+        
+        # Show correct answers if requested
+        if st.session_state.get('show_answers', False):
+            st.markdown("---")
+            st.subheader("✅ Correct Answers")
+            quiz_data = st.session_state.mcq_quiz
+            
+            for idx, q in enumerate(quiz_data['questions']):
+                with st.expander(f"Question {idx + 1}: {q['question'][:50]}..."):
+                    st.markdown(f"**Question:** {q['question']}")
+                    st.markdown(f"**Your Answer:** {st.session_state.mcq_answers.get(idx, 'Not answered')}")
+                    st.markdown(f"**Correct Answer:** {q.get('correct_answer', 'N/A')}")
+                    if q.get('explanation'):
+                        st.markdown(f"**Explanation:** {q['explanation']}")
 
 
 def main():
@@ -321,105 +491,113 @@ def main():
     display_header()
     difficulty = display_sidebar()
     
-    # Main content area
-    col1, col2 = st.columns([2, 1])
+    # Create tabs for different modes
+    tab1, tab2 = st.tabs(["💬 Ask Me Anything", "📝 Take MCQ Quiz"])
     
-    with col1:
-        st.header("💬 Ask Me Anything")
+    with tab1:
+        # Main content area
+        col1, col2 = st.columns([2, 1])
         
-        # Query input
-        query = st.text_input(
-            "What would you like to learn?",
-            placeholder="e.g., Explain neural networks, Quiz me on clustering, Practice gradient descent",
-            label_visibility="collapsed"
-        )
+        with col1:
+            st.header("💬 Ask Me Anything")
+            
+            # Query input
+            query = st.text_input(
+                "What would you like to learn?",
+                placeholder="e.g., Explain neural networks, Quiz me on clustering, Practice gradient descent",
+                label_visibility="collapsed"
+            )
+            
+            # Example queries
+            with st.expander("💡 Example Queries"):
+                examples = [
+                    "What is machine learning?",
+                    "Explain linear regression with examples",
+                    "Give me practice problems on decision trees",
+                    "Quiz me on supervised learning",
+                    "What's the difference between overfitting and underfitting?",
+                    "How does gradient descent work?",
+                ]
+                for ex in examples:
+                    if st.button(ex, key=ex):
+                        query = ex
         
-        # Example queries
-        with st.expander("💡 Example Queries"):
-            examples = [
-                "What is machine learning?",
-                "Explain linear regression with examples",
-                "Give me practice problems on decision trees",
-                "Quiz me on supervised learning",
-                "What's the difference between overfitting and underfitting?",
-                "How does gradient descent work?",
-            ]
-            for ex in examples:
-                if st.button(ex, key=ex):
-                    query = ex
+        with col2:
+            st.header("🎯 Learning Intent")
+            st.markdown("""
+            - **concept**: Learn new topics
+            - **practice**: Work on examples
+            - **quiz**: Test knowledge
+            - **doubt**: Ask questions
+            """)
+        
+        # Process query
+        if query:
+            with st.spinner("🤖 Multi-Agent System Processing..."):
+                try:
+                    # Show agent activity log
+                    with st.expander("🔍 View Agent Activity Log", expanded=False):
+                        log_container = st.empty()
+                        
+                        # Capture logs
+                        import io
+                        log_stream = io.StringIO()
+                        handler = logging.StreamHandler(log_stream)
+                        handler.setLevel(logging.INFO)
+                        formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+                        handler.setFormatter(formatter)
+                        
+                        # Add handler
+                        root_logger = logging.getLogger()
+                        root_logger.addHandler(handler)
+                        
+                        # Process query
+                        result = st.session_state.assistant.process_query(query)
+                        
+                        # Display logs
+                        log_contents = log_stream.getvalue()
+                        log_container.code(log_contents, language="log")
+                        
+                        # Remove handler
+                        root_logger.removeHandler(handler)
+                    
+                    # Display results
+                    st.success("✅ Processing Complete!")
+                    
+                    # Show detected intent and topic
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.info(f"**Intent:** {result['intent']}")
+                    with col2:
+                        st.info(f"**Topic:** {result['topic']}")
+                    with col3:
+                        st.info(f"**Difficulty:** {result['difficulty']}")
+                    
+                    st.divider()
+                    
+                    # Display explanation
+                    display_explanation(result)
+                    
+                    # Display quiz if generated
+                    if not st.session_state.quiz_results:
+                        display_quiz(result)
+                    
+                    # Display evaluation if available
+                    if st.session_state.quiz_results:
+                        display_evaluation(st.session_state.quiz_results)
+                        
+                        if st.button("🔄 Start New Query"):
+                            st.session_state.current_quiz = None
+                            st.session_state.quiz_results = None
+                            st.rerun()
+                    
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+                    logger.error(f"Application error: {e}", exc_info=True)
     
-    with col2:
-        st.header("🎯 Learning Intent")
-        st.markdown("""
-        - **concept**: Learn new topics
-        - **practice**: Work on examples
-        - **quiz**: Test knowledge
-        - **doubt**: Ask questions
-        """)
-    
-    # Process query
-    if query:
-        with st.spinner("🤖 Multi-Agent System Processing..."):
-            try:
-                # Show agent activity log
-                with st.expander("🔍 View Agent Activity Log", expanded=False):
-                    log_container = st.empty()
-                    
-                    # Capture logs
-                    import io
-                    log_stream = io.StringIO()
-                    handler = logging.StreamHandler(log_stream)
-                    handler.setLevel(logging.INFO)
-                    formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
-                    handler.setFormatter(formatter)
-                    
-                    # Add handler
-                    root_logger = logging.getLogger()
-                    root_logger.addHandler(handler)
-                    
-                    # Process query
-                    result = st.session_state.assistant.process_query(query)
-                    
-                    # Display logs
-                    log_contents = log_stream.getvalue()
-                    log_container.code(log_contents, language="log")
-                    
-                    # Remove handler
-                    root_logger.removeHandler(handler)
-                
-                # Display results
-                st.success("✅ Processing Complete!")
-                
-                # Show detected intent and topic
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.info(f"**Intent:** {result['intent']}")
-                with col2:
-                    st.info(f"**Topic:** {result['topic']}")
-                with col3:
-                    st.info(f"**Difficulty:** {result['difficulty']}")
-                
-                st.divider()
-                
-                # Display explanation
-                display_explanation(result)
-                
-                # Display quiz if generated
-                if not st.session_state.quiz_results:
-                    display_quiz(result)
-                
-                # Display evaluation if available
-                if st.session_state.quiz_results:
-                    display_evaluation(st.session_state.quiz_results)
-                    
-                    if st.button("🔄 Start New Query"):
-                        st.session_state.current_quiz = None
-                        st.session_state.quiz_results = None
-                        st.rerun()
-                
-            except Exception as e:
-                st.error(f"❌ Error: {str(e)}")
-                logger.error(f"Application error: {e}", exc_info=True)
+    with tab2:
+        # MCQ Quiz Mode
+        display_mcq_quiz_mode()
     
     # Footer
     st.divider()

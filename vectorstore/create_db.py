@@ -129,8 +129,8 @@ if __name__ == "__main__":
     """
     import sys
     
-    logger.info("✅ 100% LOCAL: Using Sentence Transformers for embeddings (no API needed!)")
-    logger.info("✅ 100% LOCAL: Using Ollama for chat (no API needed!)")
+    logger.info("100% LOCAL: Using Sentence Transformers for embeddings (no API needed!)")
+    logger.info("100% LOCAL: Using Ollama for chat (no API needed!)")
     
     # Create vector database
     try:

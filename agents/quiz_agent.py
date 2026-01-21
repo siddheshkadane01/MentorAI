@@ -49,36 +49,44 @@ class QuizAgent:
         """
         logger.info(f"[QUIZ AGENT] Generating {num_questions} {difficulty} questions on: {topic}")
         
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", f"""You are an expert quiz creator for educational purposes.
+        system_prompt = f"""You are an expert quiz creator for educational purposes.
 
-Generate {num_questions} {difficulty}-level questions about: {topic}
+IMPORTANT: Generate EXACTLY {num_questions} questions. No more, no less.
+
+Topic: {topic}
+Difficulty: {difficulty}
+Number of Questions Required: {num_questions}
 
 Use the provided context to ensure questions are relevant and accurate.
 
 Context:
-{{context}}
+{{{{context}}}}
 
 Requirements:
-1. Questions should test understanding, not just memorization
-2. Include a mix of question types (multiple choice, short answer, etc.)
-3. Provide correct answers
-4. Make questions appropriate for {difficulty} difficulty
+1. Generate EXACTLY {num_questions} questions
+2. Questions should test understanding, not just memorization
+3. Include a mix of question types (multiple choice preferred)
+4. Provide correct answers clearly
+5. Make questions appropriate for {difficulty} difficulty
 
-Respond ONLY in this JSON format:
-{{
+Respond ONLY in this JSON format (no additional text):
+{{{{
   "questions": [
-    {{
+    {{{{
       "question": "Question text here?",
-      "type": "multiple_choice or short_answer",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "correct_answer": "Answer here",
+      "type": "multiple_choice",
+      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
+      "correct_answer": "A) First option",
       "explanation": "Why this is the correct answer"
-    }}
+    }}}}
   ]
-}}
+}}}}
 
-For short_answer type, options can be empty list []."""),
+For short_answer type, use empty options list [].
+IMPORTANT: The 'correct_answer' must EXACTLY match one of the options (including the letter prefix)."""
+        
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
             ("user", "Generate the quiz now.")
         ])
         
@@ -124,8 +132,17 @@ For short_answer type, options can be empty list []."""),
         topic = state.get("topic", "")
         context = state.get("context", "")
         difficulty = state.get("difficulty", "medium")
+        query = state.get("query", "")
         
-        quiz = self.generate_quiz(topic, context, difficulty)
+        # Try to extract number of questions from query
+        num_questions = 5  # default
+        import re
+        match = re.search(r'(\d+)-question', query.lower())
+        if match:
+            num_questions = int(match.group(1))
+            logger.info(f"[QUIZ AGENT] Detected {num_questions} questions requested in query")
+        
+        quiz = self.generate_quiz(topic, context, difficulty, num_questions)
         state["quiz"] = quiz
         
         return state
