@@ -167,8 +167,8 @@ Final Output → UI Display
 ├─────────────────┼─────────────────────────────────────┤
 │ Frontend        │ Streamlit                          │
 │ Orchestration   │ LangGraph, LangChain              │
-│ LLM             │ OpenAI GPT-4o-mini                │
-│ Vector DB       │ FAISS + OpenAI Embeddings         │
+│ LLM             │ Ollama (llama3.2:3b) - Local      │
+│ Vector DB       │ FAISS + Sentence Transformers     │
 │ Language        │ Python 3.8+                       │
 │ Packaging       │ pip, venv                         │
 └─────────────────┴─────────────────────────────────────┘

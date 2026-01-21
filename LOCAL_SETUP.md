@@ -33,7 +33,7 @@ streamlit run app.py
 
 ## 📊 Benefits:
 
-| Aspect | Before (Gemini) | Now (Local) |
+| Aspect | Cloud APIs | Local (Ollama) |
 |--------|----------------|-------------|
 | **API Cost** | $0.01-0.03/query | **$0** |
 | **Internet** | Required | **Optional** |

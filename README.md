@@ -251,7 +251,7 @@ Loading documents from: data/sample_notes.txt
 Loaded 1 document(s)
 Splitting documents (chunk_size=1000, overlap=200)
 Created 45 text chunks
-Initializing OpenAI embeddings...
+✅ LOCAL EMBEDDINGS: Using Sentence Transformers (no API needed!)
 Creating FAISS vector store...
 Saving vector store to: vectorstore/faiss_index
 ============================================================
@@ -421,15 +421,6 @@ TeachingAgent(model_name="gpt-4o-mini")  # Explanations
 python vectorstore/create_db.py
 ```
 
-### OpenAI API Errors
-
-**Error:** `OPENAI_API_KEY environment variable not set`
-
-**Solution:**
-```bash
-export OPENAI_API_KEY='your-api-key-here'
-```
-
 ### Import Errors
 
 **Error:** `ModuleNotFoundError: No module named 'langgraph'`
@@ -486,7 +477,7 @@ MIT License - see LICENSE file for details
 
 - **LangGraph**: For powerful agent orchestration
 - **LangChain**: For LLM application framework
-- **OpenAI**: For GPT models and embeddings
+- **Ollama**: For local LLM execution
 - **FAISS**: For efficient vector similarity search
 - **Streamlit**: For rapid UI development
 

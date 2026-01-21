@@ -63,7 +63,7 @@
 
 ### 3. RAG Implementation ✅
 - FAISS vector database
-- OpenAI embeddings
+- Sentence Transformers (local embeddings)
 - Semantic similarity search
 - Prevents LLM hallucination
 - Grounded responses
@@ -87,7 +87,7 @@
 
 ### Quick Start (3 commands)
 ```bash
-export OPENAI_API_KEY='your-api-key'
+ollama pull llama3.2:3b
 pip install -r requirements.txt
 python vectorstore/create_db.py
 streamlit run app.py
@@ -200,9 +200,9 @@ The vector database includes comprehensive content on:
 Frontend:       Streamlit 1.39.0
 Orchestration:  LangGraph 0.2.45
 LLM Framework:  LangChain 0.3.7
-AI Model:       OpenAI GPT-4o-mini
-Vector DB:      FAISS 1.8.0
-Embeddings:     OpenAI text-embedding-3
+AI Model:       Ollama (llama3.2:3b) - 100% Local
+Vector DB:      FAISS 1.8.0 - Local Storage
+Embeddings:     Sentence Transformers - Local
 Language:       Python 3.8+
 ```
 
@@ -289,7 +289,7 @@ This project demonstrates:
 
 ## 🚀 Next Steps for Users
 
-1. ✅ Set OpenAI API key
+1. ✅ Install Ollama and download model
 2. ✅ Run `./setup.sh` or manual setup
 3. ✅ Create vector database: `python vectorstore/create_db.py`
 4. ✅ Launch app: `streamlit run app.py`

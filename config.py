@@ -47,9 +47,7 @@ class Config:
         Returns:
             True if configuration is valid
         """
-        if not cls.GOOGLE_API_KEY:
-            print("❌ GOOGLE_API_KEY not set!")
-            return False
+        # No API keys needed for 100% local operation
         return True
 
 
