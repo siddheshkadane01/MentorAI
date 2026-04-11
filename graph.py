@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 # Define the state structure
 class AgentState(TypedDict):
     """State object shared across all agents."""
+    user_id: int                        # Authenticated student id (optional)
+    user_role: str                      # Role context (student/admin)
     query: str                          # User's question/request
     intent: str                         # Classified intent (concept/practice/quiz/doubt)
     topic: str                          # Extracted topic
@@ -247,6 +249,8 @@ class TeachingAssistantGraph:
         
         # Initialize state
         initial_state: AgentState = {
+            "user_id": -1,
+            "user_role": "student",
             "query": query,
             "intent": "",
             "topic": "",

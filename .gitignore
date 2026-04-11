@@ -48,6 +48,9 @@ vectorstore/faiss_index/
 *.log
 logs/
 
+# Local databases
+*.db
+
 # Streamlit
 .streamlit/
 

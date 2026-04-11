@@ -17,6 +17,9 @@
 - 💻 **Interactive UI** - Clean Streamlit interface
 - 💰 **100% Local & Free** - Runs completely offline with Ollama (no API costs)
 - 🔌 **No Internet Required** - All processing happens on your machine
+- 🔐 **Role-Based Access** - Student signup/login and admin login
+- 📈 **Admin Analytics Dashboard** - Accuracy, score, topic trends, question-fit, latency, and hallucination indicators
+- 🗄️ **Persistent Metrics** - Quiz attempts and interaction telemetry stored in SQLite/PostgreSQL-compatible schema
 
 ## 🚀 Quick Start
 
@@ -46,10 +49,18 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Optional: configure backend env vars
+export JWT_SECRET="replace-with-strong-secret"
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="admin123"
+
 # Create vector database
 python vectorstore/create_db.py
 
-# Run application
+# Start backend API (in terminal 1)
+uvicorn backend.main:app --reload --port 8000
+
+# Run Streamlit application (in terminal 2)
 streamlit run app.py
 ```
 
@@ -57,6 +68,20 @@ Open **http://localhost:8501** and try:
 - "Explain supervised learning"
 - "Give me a quiz on machine learning"
 - "What's gradient descent?"
+
+### Role-Based Access
+
+- Student: Sign up from the Streamlit login screen, then use Ask mode and MCQ quiz mode.
+- Admin: Log in using seeded admin credentials to view dashboard analytics.
+
+### Admin Dashboard Metrics
+
+- Quiz accuracy and overall score
+- Precision, recall, and F1 (attempt-level proxy)
+- Topic-wise performance
+- Question-fit by difficulty vs success rate
+- Per-student trend summary
+- Average latency and hallucination indicators
 
 ## 🏗️ Architecture
 
@@ -155,6 +180,9 @@ Edit `config.py` to customize:
 - **Embeddings**: Sentence Transformers (all-MiniLM-L6-v2) - Local
 - **Vector DB**: FAISS 1.8.0 - Local Storage
 - **Frontend**: Streamlit 1.39.0
+- **Backend API**: FastAPI + Uvicorn
+- **Database**: SQLAlchemy ORM (SQLite default)
+- **Auth**: JWT + bcrypt password hashing
 - **Python**: 3.8+
 - **Cost**: $0 - Everything runs locally!
 

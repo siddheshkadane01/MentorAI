@@ -38,6 +38,13 @@ class Config:
     # UI Configuration
     APP_TITLE: str = "MentorAI: AI Teaching Assistant"
     APP_ICON: str = "🤖"
+
+    # Backend and Auth Configuration
+    BACKEND_BASE_URL: str = os.getenv("BACKEND_BASE_URL", "http://127.0.0.1:8000")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./mentorai.db")
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "change-this-secret-in-env")
+    ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "admin")
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin123")
     
     @classmethod
     def validate(cls) -> bool:
